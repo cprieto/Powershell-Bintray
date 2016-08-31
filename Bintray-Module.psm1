@@ -76,5 +76,34 @@ Function Get-BintrayRepository {
   }
 }
 
+Function Get-BintrayPackage {
+  Param(
+    [Parameter(Mandatory=$true)]
+    [String] $Token,
+
+    [Parameter(Mandatory=$true)]
+    [String] $Account,
+
+    [Parameter(Mandatory=$true)]
+    [String] $Repository,
+
+    [String] $User = $Account,
+    [String] $Package
+  )
+
+  Process {
+    $credential = Get-BintrayCredentials -User $User -Token $Token
+    $url = "$base_uri/repos/$Account/$Repository/packages"
+    If ([String]::IsNullOrWhiteSpace($Package) -ne $true) {
+      $url = "$base_uri/packages/$Account/$Repository/$Package"
+    }
+
+    _Try {
+      Invoke-WebRequest -Uri $url -Credential $credential -Method Get | ConvertFrom-JSON
+    }
+  }
+}
+
 Export-ModuleMember Get-BintrayVersion
 Export-ModuleMember Get-BintrayRepository
+Export-ModuleMember Get-BintrayPackage
