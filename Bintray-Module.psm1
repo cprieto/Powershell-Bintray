@@ -40,7 +40,7 @@ Function Get-BintrayVersion {
     [String] $User = $Account,
 
     [ValidateNotNullOrEmpty()]
-    [String] $Version = "_latest",
+    [String] $Version = "_latest"
   )
 
   Process {
@@ -122,14 +122,15 @@ Function New-BintrayRepository {
     [ValidateNotNullOrEmpty()]
     [String] $Repository,
 
-    [Parameter(Mandatory=$true)]
     [ValidateNotNullOrEmpty()]
-    [String] $Type,
+    [ValidateSet('generic', 'maven', 'debian', 'rpm', 'docker', 'npm', 'opkg', 'nuget', 'vagrant')]
+    [String] $Type = 'generic',
 
     [ValidateNotNullOrEmpty()]
     [String] $User = $Account,
 
     [String] $Description = "",
+    [String[]] $Labels,
     [Switch] $Private
   )
   Process {
@@ -137,12 +138,16 @@ Function New-BintrayRepository {
     $url = "$base_uri/repos/$Account/$Repository"
     $body = @{
       description = $Description;
-      type = $Type;
-      Private = "false"
+      type = ($Type.ToLower());
+      private = "false"
     }
 
     If ($Private) {
-      $body.Set_Item("Private", "true")
+      $body.Set_Item("private", "true")
+    }
+
+    If ($Labels) {
+      $body.Add("labels", $Labels)
     }
 
     Invoke-WebRequest -Uri $url -Credential $credential -Method Post `
