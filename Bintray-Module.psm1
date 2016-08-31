@@ -16,15 +16,6 @@ Function Get-BintrayCredentials {
   }
 }
 
-Function _Try($block) {
-  Try {
-    &$block
-  } Catch {
-    Write-Error $_.Exception.Message
-    Return -1
-  }
-}
-
 Function Get-BintrayVersion {
   Param(
     [Parameter(Mandatory=$true)]
@@ -46,9 +37,8 @@ Function Get-BintrayVersion {
   Process {
     $credential = Get-BintrayCredentials -User $User -Token $Token
     $url = "$base_uri/packages/$Account/$Repository/$Package/versions/$Version"
-    _Try {
-      Invoke-WebRequest -Uri $url -Credential $credential | ConvertFrom-JSON
-    }
+
+    Invoke-WebRequest -Uri $url -Credential $credential | ConvertFrom-JSON
   }
 }
 
@@ -69,9 +59,8 @@ Function Get-BintrayRepository {
     If ([String]::IsNullOrWhiteSpace($Repository) -ne $true) {
       $url = "$url/$Repository"
     }
-    _Try {
-      Invoke-WebRequest -Uri $url -Credential $credential -Method Get | ConvertFrom-JSON
-    }
+
+    Invoke-WebRequest -Uri $url -Credential $credential -Method Get | ConvertFrom-JSON
   }
 }
 
@@ -97,9 +86,7 @@ Function Get-BintrayPackage {
       $url = "$base_uri/packages/$Account/$Repository/$Package"
     }
 
-    _Try {
-      Invoke-WebRequest -Uri $url -Credential $credential -Method Get | ConvertFrom-JSON
-    }
+    Invoke-WebRequest -Uri $url -Credential $credential -Method Get | ConvertFrom-JSON
   }
 }
 
@@ -136,11 +123,9 @@ Function New-BintrayRepository {
       $body.Set_Item("Private", "true")
     }
 
-    _Try {
-      Invoke-WebRequest -Uri $url -Credential $credential -Method Post `
-        -Body ($body | ConvertTo-JSON) -ContentType "application/json" `
-        | ConvertFrom-JSON
-    }
+    Invoke-WebRequest -Uri $url -Credential $credential -Method Post `
+      -Body ($body | ConvertTo-JSON) -ContentType "application/json" `
+      | ConvertFrom-JSON
   }
 }
 
@@ -161,10 +146,8 @@ Function Remove-BintrayRepository {
   Process {
     $credential = Get-BintrayCredentials -User $User -Token $Token
     $url = "$base_uri/repos/$Account/$Repository"
-    _Try {
-      Invoke-WebRequest -Uri $url -Credential $credential -Method Delete `
-        | ConvertFrom-JSON
-    }
+
+    [void] Invoke-WebRequest -Uri $url -Credential $credential -Method Delete
   }
 }
 
