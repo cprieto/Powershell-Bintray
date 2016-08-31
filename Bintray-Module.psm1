@@ -40,7 +40,6 @@ Function Get-BintrayVersion {
     [String] $Package,
 
     [String] $Version = "_latest",
-
     [String] $User = $Account
   )
 
@@ -104,6 +103,75 @@ Function Get-BintrayPackage {
   }
 }
 
+Function New-BintrayRepository {
+  Param(
+    [Parameter(Mandatory=$true)]
+    [String] $Token,
+
+    [Parameter(Mandatory=$true)]
+    [String] $Account,
+
+    [Parameter(Mandatory=$true)]
+    [String] $Repository,
+
+    [Parameter(Mandatory=$true)]
+    [String] $Type,
+
+    [String] $Description = "",
+
+    [String] $User = $Account,
+
+    [Switch] $Private
+  )
+  Process {
+    $credential = Get-BintrayCredentials -User $User -Token $Token
+    $url = "$base_uri/repos/$Account/$Repository"
+    $body = @{
+      description = $Description;
+      type = $Type;
+      Private = "false"
+    }
+
+    If ($Private) {
+      $body.Set_Item("Private", "true")
+    }
+
+    _Try {
+      Invoke-WebRequest -Uri $url -Credential $credential -Method Post `
+        -Body ($body | ConvertTo-JSON) -ContentType "application/json" `
+        | ConvertFrom-JSON
+    }
+  }
+}
+
+Function Remove-BintrayRepository {
+  Param(
+    [Parameter(Mandatory=$true)]
+    [String] $Token,
+
+    [Parameter(Mandatory=$true)]
+    [String] $Account,
+
+    [Parameter(Mandatory=$true)]
+    [String] $Repository,
+
+    [String] $User = $Account
+  )
+
+  Process {
+    $credential = Get-BintrayCredentials -User $User -Token $Token
+    $url = "$base_uri/repos/$Account/$Repository"
+    _Try {
+      Invoke-WebRequest -Uri $url -Credential $credential -Method Delete `
+        | ConvertFrom-JSON
+    }
+  }
+}
+
 Export-ModuleMember Get-BintrayVersion
 Export-ModuleMember Get-BintrayRepository
 Export-ModuleMember Get-BintrayPackage
+
+Export-ModuleMember New-BintrayRepository
+
+Export-ModuleMember Remove-BintrayRepository
