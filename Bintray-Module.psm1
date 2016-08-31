@@ -18,6 +18,11 @@ Function Get-BintrayCredentials {
   }
 }
 
+function isURIWeb($address) {
+  $uri = $address -as [System.URI]
+  $uri.AbsoluteURI -ne $null -and $uri.Scheme -match '[http|https]'
+}
+
 Function Get-BintrayVersion {
   Param(
     [Parameter(Mandatory=$true)]
@@ -108,6 +113,13 @@ Function Get-BintrayPackage {
   }
 }
 
+Function Get-BintrayLicense {
+  Process {
+    $url = "$base_uri/licenses/oss_licenses"
+    Invoke-WebRequest -Uri $url -Method Get | ConvertFrom-JSON
+  }
+}
+
 Function New-BintrayRepository {
   Param(
     [Parameter(Mandatory=$true)]
@@ -133,6 +145,7 @@ Function New-BintrayRepository {
     [String[]] $Labels,
     [Switch] $Private
   )
+
   Process {
     $credential = Get-BintrayCredentials -User $User -Token $Token
     $url = "$base_uri/repos/$Account/$Repository"
@@ -144,6 +157,60 @@ Function New-BintrayRepository {
 
     If ($Private) {
       $body.Set_Item("private", "true")
+    }
+
+    If ($Labels) {
+      $body.Add("labels", $Labels)
+    }
+
+    Invoke-WebRequest -Uri $url -Credential $credential -Method Post `
+      -Body ($body | ConvertTo-JSON) -ContentType "application/json" `
+      | ConvertFrom-JSON
+  }
+}
+
+Function New-BintrayPackage {
+  Param(
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Token,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Account,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Repository,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Name,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String[]] $Licenses,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript({isURIWeb $_})]
+    [String] $VCSUrl,
+
+    [ValidateNotNullOrEmpty()]
+    [String] $User = $Account,
+
+    [String] $Description = "",
+    [String[]] $Labels
+  )
+
+  Process {
+    $credential = Get-BintrayCredentials -User $User -Token $Token
+    $url = "$base_uri/packages/$Account/$Repository"
+    $body = @{
+      name = $Name;
+      description = $Description;
+      licenses = $Licenses;
+      vcs_url = $VCSUrl;
     }
 
     If ($Labels) {
@@ -182,10 +249,43 @@ Function Remove-BintrayRepository {
   }
 }
 
+Function Remove-BintrayPackage {
+  Param(
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Token,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Account,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Repository,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Package,
+
+    [ValidateNotNullOrEmpty()]
+    [String] $User = $Account
+  )
+
+  Process {
+    $credential = Get-BintrayCredentials -User $User -Token $Token
+    $url = "$base_uri/packages/$Account/$Repository/$Package"
+
+    [void] (Invoke-WebRequest -Uri $url -Credential $credential -Method Delete)
+  }
+}
+
 Export-ModuleMember Get-BintrayVersion
 Export-ModuleMember Get-BintrayRepository
 Export-ModuleMember Get-BintrayPackage
+Export-ModuleMember Get-BintrayLicense
 
 Export-ModuleMember New-BintrayRepository
+Export-ModuleMember New-BintrayPackage
 
 Export-ModuleMember Remove-BintrayRepository
+Export-ModuleMember Remove-BintrayPackage
