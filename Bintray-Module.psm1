@@ -53,4 +53,28 @@ Function Get-BintrayVersion {
   }
 }
 
+Function Get-BintrayRepository {
+  Param(
+    [Parameter(Mandatory=$true)]
+    [String] $Token,
+
+    [Parameter(Mandatory=$true)]
+    [String] $Account,
+
+    [String] $User = $Account,
+    [String] $Repository
+  )
+  Process {
+    $credential = Get-BintrayCredentials -User $User -Token $Token
+    $url = "$base_uri/repos/$Account"
+    If ([String]::IsNullOrWhiteSpace($Repository) -ne $true) {
+      $url = "$url/$Repository"
+    }
+    _Try {
+      Invoke-WebRequest -Uri $url -Credential $credential -Method Get | ConvertFrom-JSON
+    }
+  }
+}
+
 Export-ModuleMember Get-BintrayVersion
+Export-ModuleMember Get-BintrayRepository
