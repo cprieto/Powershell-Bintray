@@ -5,9 +5,11 @@ $base_uri = "https://api.bintray.com"
 Function Get-BintrayCredentials {
   Param(
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $User,
 
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Token
   )
 
@@ -19,19 +21,26 @@ Function Get-BintrayCredentials {
 Function Get-BintrayVersion {
   Param(
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Token,
 
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Account,
 
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Repository,
 
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Package,
 
+    [ValidateNotNullOrEmpty()]
+    [String] $User = $Account,
+
+    [ValidateNotNullOrEmpty()]
     [String] $Version = "_latest",
-    [String] $User = $Account
   )
 
   Process {
@@ -45,12 +54,16 @@ Function Get-BintrayVersion {
 Function Get-BintrayRepository {
   Param(
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Token,
 
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Account,
 
+    [ValidateNotNullOrEmpty()]
     [String] $User = $Account,
+
     [String] $Repository
   )
   Process {
@@ -67,15 +80,20 @@ Function Get-BintrayRepository {
 Function Get-BintrayPackage {
   Param(
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Token,
 
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Account,
 
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Repository,
 
+    [ValidateNotNullOrEmpty()]
     [String] $User = $Account,
+
     [String] $Package
   )
 
@@ -93,21 +111,25 @@ Function Get-BintrayPackage {
 Function New-BintrayRepository {
   Param(
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Token,
 
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Account,
 
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Repository,
 
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Type,
 
-    [String] $Description = "",
-
+    [ValidateNotNullOrEmpty()]
     [String] $User = $Account,
 
+    [String] $Description = "",
     [Switch] $Private
   )
   Process {
@@ -132,14 +154,18 @@ Function New-BintrayRepository {
 Function Remove-BintrayRepository {
   Param(
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Token,
 
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Account,
 
     [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
     [String] $Repository,
 
+    [ValidateNotNullOrEmpty()]
     [String] $User = $Account
   )
 
@@ -147,7 +173,7 @@ Function Remove-BintrayRepository {
     $credential = Get-BintrayCredentials -User $User -Token $Token
     $url = "$base_uri/repos/$Account/$Repository"
 
-    [void] Invoke-WebRequest -Uri $url -Credential $credential -Method Delete
+    [void] (Invoke-WebRequest -Uri $url -Credential $credential -Method Delete)
   }
 }
 
