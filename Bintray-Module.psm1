@@ -223,6 +223,56 @@ Function New-BintrayPackage {
   }
 }
 
+Function New-BintrayVersion {
+  Param(
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Token,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Account,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Repository,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Package,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Name,
+
+    [ValidateNotNullOrEmpty()]
+    [String] $User = $Account,
+
+    [String] $Description = "",
+    [String] $VCSTag,
+    [DateTime] $ReleasedOn = (Get-Date)
+  )
+
+  Process {
+    $credential = Get-BintrayCredentials -User $User -Token $Token
+    $url = "$base_uri/packages/$Account/$Repository/$Package/versions"
+    $body = @{
+      name = $Name;
+      description = $Description;
+      released = $ReleasedOn;
+      licenses = $Licenses;
+    }
+
+    If ($VCSTag) {
+      $body.Set_Item("vcs_tag", $VCSTag)
+    }
+
+    Invoke-WebRequest -Uri $url -Credential $credential -Method Post `
+      -Body ($body | ConvertTo-JSON) -ContentType "application/json" `
+      | ConvertFrom-JSON
+  }
+}
+
 Function Remove-BintrayRepository {
   Param(
     [Parameter(Mandatory=$true)]
@@ -279,6 +329,89 @@ Function Remove-BintrayPackage {
   }
 }
 
+Function Remove-BintrayVersion {
+  Param(
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Token,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Account,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Repository,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Package,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Version,
+
+    [ValidateNotNullOrEmpty()]
+    [String] $User = $Account
+  )
+
+  Process {
+    $credential = Get-BintrayCredentials -User $User -Token $Token
+    $url = "/packages/$Account/$Repository/$Package/versions/$Version"
+
+    [void] (Invoke-WebRequest -Uri $url -Credential $credential -Method Delete)
+  }
+}
+
+Function Set-BintrayReleaseContent {
+  Param(
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Token,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Account,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Repository,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Package,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $Version,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [String] $InFile,
+
+    [String] $Path,
+
+    [ValidateNotNullOrEmpty()]
+    [String] $User = $Account,
+
+    [Switch] $Publish
+  )
+
+  Process {
+    $credential = Get-BintrayCredentials -User $User -Token $Token
+    If ($Path -ne $null) {
+      $Path = [System.IO.Path]::GetFileName($InFile)
+    }
+
+    $url = "$base_uri/content/$Account/$Repository/$Package/$Version/$Path"
+    If ($Publish) {
+      $url = "$url?publish=1"
+    }
+
+    Invoke-WebRequest -Uri $url -Credential $credential -Method Put -InFile $InFile
+  }
+}
+
 Export-ModuleMember Get-BintrayVersion
 Export-ModuleMember Get-BintrayRepository
 Export-ModuleMember Get-BintrayPackage
@@ -286,6 +419,10 @@ Export-ModuleMember Get-BintrayLicense
 
 Export-ModuleMember New-BintrayRepository
 Export-ModuleMember New-BintrayPackage
+Export-ModuleMember New-BintrayVersion
 
 Export-ModuleMember Remove-BintrayRepository
 Export-ModuleMember Remove-BintrayPackage
+Export-ModuleMember Remove-BintrayVersion
+
+Export-ModuleMember Set-BintrayReleaseContent
