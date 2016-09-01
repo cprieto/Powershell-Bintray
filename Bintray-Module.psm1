@@ -405,10 +405,11 @@ Function Set-BintrayReleaseContent {
 
     $url = "$base_uri/content/$Account/$Repository/$Package/$Version/$Path"
     If ($Publish) {
-      $url = "$url?publish=1"
+      $url = "$url`?publish=1"
     }
 
-    Invoke-WebRequest -Uri $url -Credential $credential -Method Put -InFile $InFile
+    Invoke-WebRequest -Uri $url -Credential $credential -Method Put -InFile $InFile `
+        | ConvertFrom-Json
   }
 }
 
